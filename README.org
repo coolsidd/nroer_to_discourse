@@ -1,0 +1,5 @@
+#+TITLE: README
+
+* NROER to Discourse
+This repository contains scripts used to interface a local discourse server and
+port all the data from NROER to it
