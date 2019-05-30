@@ -50,3 +50,40 @@ def post_request(data, url, files = {},params={}, json={},timeout=None, allow_re
     response = requests.request("POST", url, json=json, data=data, headers = headers, files=files, params=params,timeout=timeout,allow_redirects=allow_redirects,**kwargs)
     return parse_response(response)
 
+def get_categories():
+    end_point = "/categories.json"
+    url_with_end_point = urljoin(URL, end_point)
+    data = dict()
+    return get_request(data, url_with_end_point)
+
+def create_category(name, color, text_color):
+    end_point = "/captegories.json"
+    url_with_end_point = urljoin(URL, end_point)
+    data = {
+        "name": name,
+        "color": color,
+        "text_color": text_color
+    }
+    return post_request(data,url_with_end_point)
+
+
+def create_user(name, email, password, username, active = True, approved = True, user_fields="" ):
+    end_point = "/users"
+    url_with_end_point = urljoin(URL, end_point)
+    data = locals()
+    return post_request(data, url_with_end_point)
+
+def upload_image_or_avatar(_type, userid=None, synchronous=False, image=None):
+    assert type(userid) == int
+    assert _type in {"avatar", "profile_background", "card_background", "custom_emoji", "composer"}
+    end_point = "/uploads.json"
+    url_with_end_point = urljoin(URL, end_point)
+    synchronous = str(synchronous).lower()
+    data = {
+        "type": _type,
+        "userid": userid,
+        "synchronous": synchronous,
+    }
+
+    files = {"file":open(image,"rb")}
+    return post_request(data, url_with_end_point, files=files)
