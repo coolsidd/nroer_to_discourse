@@ -102,7 +102,7 @@ def get_categories():
 
 
 def create_category(name, color, text_color):
-    end_point = "/captegories.json"
+    end_point = "/categories.json"
     url_with_end_point = urljoin(URL, end_point)
     data = {"name": name, "color": color, "text_color": text_color}
     return post_request(data, url_with_end_point)
@@ -133,3 +133,40 @@ def upload_image_or_avatar(_type, userid=None, synchronous=False, image=None):
 
     files = {"file": open(image, "rb")}
     return post_request(data, url_with_end_point, files=files)
+
+
+def get_tag(tag):
+    end_point = "/tag/{}".format(tag)
+    url_with_end_point = urljoin(URL, end_point)
+    data = {}
+    return get_request(data, url_with_end_point)
+
+
+def get_tag_groups():
+    end_point = "/tag_groups.json"
+    url_with_end_point = urljoin(URL, end_point)
+    data = locals()
+    return get_request(data, url_with_end_point)
+
+
+def create_new_tag_group(name, tag_names):
+    end_point = "/tag_groups.json"
+    url_with_end_point = urljoin(URL, end_point)
+    data = locals()
+    return post_request(data, url_with_end_point)
+
+
+def create_topic(
+    title,
+    topic_id,
+    raw,
+    category=None,
+    target_usernames=None,
+    archetype=None,
+    created_at=None,
+):
+    end_point = "/posts.json"
+    url_with_end_point = urljoin(URL, end_point)
+    data = locals()
+    data = {k: v for k, v in data.items() if v is not None}
+    return post_request(data, url_with_end_point)
