@@ -1,0 +1,11 @@
+@import "common/foundation/mixins";
+
+@mixin withCategory ($category) {
+    &:before {
+        content:$category;
+    }
+}
+
+[data-tag-name="primary"],[data-tag-name="secondary"],[data-tag-name="senior-secondary"] {
+    @include withCategory("Education Level: ");
+}
