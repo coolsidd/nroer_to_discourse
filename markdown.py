@@ -3,6 +3,11 @@ from useful_utilities import *
 @debug_func
 def markdown(title,content,image,license,source,authors,collection,location):
 	template = """# {}
+
+def markdown_image(
+    title, content, image, license, source, authors, collection, location
+):
+    template = """# {}
 ### {}
 ![alt text]({})
 ##### *License*: {}
