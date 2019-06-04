@@ -1,9 +1,11 @@
 #!/usr/bin/env python
+from functools import wraps
 
 
 def debug_func(func):
     from pprint import pprint
 
+    @wraps(func)
     def wrapper(*args, **kwargs):
         print("ARGS:")
         pprint(args)
@@ -20,6 +22,7 @@ def debug_func(func):
 def timeit(func):
     import time
 
+    @wraps(func)
     def wrapper(*args, **kwargs):
         print("Executing {}...".format(func.__name__))
         start_time = time.time()
