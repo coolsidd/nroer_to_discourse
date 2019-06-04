@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import requests
+import datetime
 from pprint import pprint
 import json
 from urllib.parse import urljoin
@@ -60,6 +61,40 @@ def get_request(
     return parse_response(response)
 
 
+@debug_func
+def put_request(
+    data,
+    url,
+    files={},
+    params={},
+    json={},
+    timeout=None,
+    allow_redirects=False,
+    **kwargs
+):
+    params.setdefault("api_key", API_KEY)
+    params.setdefault("api_username", API_USERNAME)
+    headers = {"Accept": "application/json; charset=utf-8"}
+    # data.update(args)
+    # data.setdefault("Api-Key" , API_KEY)
+    # data.setdefault("Api-Username", API_USERNAME)
+    # response = requests.get(url, data=data_as_str)
+    response = requests.request(
+        "PUT",
+        url,
+        json=json,
+        data=data,
+        headers=headers,
+        files=files,
+        params=params,
+        timeout=timeout,
+        allow_redirects=allow_redirects,
+        **kwargs
+    )
+    return parse_response(response)
+
+
+@debug_func
 def post_request(
     data,
     url,
