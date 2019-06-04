@@ -32,6 +32,17 @@ def identify(name, value, filename):
     else:
         return None
 
+
+def identify_name(name, filename):
+    with open(filename, "r") as readFile:
+        reader = csv.reader(readFile)
+        for row in reader:
+            if row[0] == name:
+                row[-1] = ast.literal_eval(row[-1])
+                return row
+        return None
+
+
 def store(name, value, data, filename):
     temp_file = NamedTemporaryFile(mode="w", delete=False)
     with open(filename, "r+") as csv_file:
