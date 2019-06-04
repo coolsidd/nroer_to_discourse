@@ -10,13 +10,44 @@ from useful_utilities import *
 URL = "http://localhost:9292"
 API_KEY = "8302ca56136b04e4b2b82bc03ca4d4346cb5dc3dad6e3881138b9c232d7d4b94"
 API_USERNAME = "coolsidd"
+TEST_MODE = False
+
+# _requst_copy = _request
+# # TODO
+# def enable_test_mode():
+#     _request_copy = _request
+#     _request = debug_func(_request)
+#     TEST_MODE = True
+
+
+# def disable_test_mode():
+#     _request = _requst_copy
+#     TEST_MODE = False
+
+
+@debug_func
+def _request(
+    _type, url, json, data, headers, files, params, timeout, allow_redirects, **kwargs
+):
+    return requests.request(
+        _type,
+        url,
+        json=json,
+        data=data,
+        headers=headers,
+        files=files,
+        params=params,
+        timeout=timeout,
+        allow_redirects=allow_redirects,
+        **kwargs
+    )
 
 
 def parse_response(response):
     try:
         pprint(json.loads(response.content))
     except:
-        print(response.content)
+        pass
     if response.ok:
         print("Success!")
     elif response.status_code == 403:
