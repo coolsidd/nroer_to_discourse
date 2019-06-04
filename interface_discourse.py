@@ -25,7 +25,6 @@ TEST_MODE = False
 #     TEST_MODE = False
 
 
-@debug_func
 def _request(
     _type, url, json, data, headers, files, params, timeout, allow_redirects, **kwargs
 ):
@@ -235,7 +234,6 @@ def set_tags_to_topic(topic_name, topic_id, tags):
     return put_request(data, url_with_end_point)
 
 
-@debug_func
 def update_a_tag_group(group_id, group_name, tags):
     end_point = "/tag_groups/{}.json".format(group_id)
     url_with_end_point = urljoin(URL, end_point)

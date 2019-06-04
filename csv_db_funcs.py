@@ -1,7 +1,15 @@
 import csv
 from tempfile import NamedTemporaryFile
+from useful_utilities import *
 import shutil
 import ast
+
+
+def enable_testing():
+    # TODO
+    append_data = debug_func()
+    identify = debug_func(append_data)
+    store = debug_func(store)
 
 
 def append_data(nid, did, filename, **kwargs):

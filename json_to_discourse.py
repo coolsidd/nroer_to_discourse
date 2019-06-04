@@ -8,18 +8,23 @@ import interface_discourse
 import datetime
 import csv_db_funcs
 from markdown import *
+from time import sleep
 
 from urllib.parse import urljoin
 
-with open("./gandhi.json", "r") as json_file:
+with open("./quatub.json", "r") as json_file:
     my_json = json.load(json_file)
 
 DISCOURSE_METADATA = "disc_meta.csv"
 UNUSED_DATA = "mongo_unused.csv"
+DISCOURSE_TOPIC_IDS = "disc_topics.csv"
+
 MEDIA_URL = "https://nroer.gov.in/media/"
 
 
 def convert_to_tag(x):
+    if x is None:
+        return None
     return "-".join(x.lower().split())
 
 
@@ -40,7 +45,7 @@ def get_from_nested_dicts(category_list, key, delete=False):
         except KeyError:
             continue
     else:
-        raise KeyError
+        return None
 
 
 def process_attributes(attr_list, delete=False):
@@ -115,7 +120,8 @@ def process_json(my_json, test_mode=False, skip=False):
     source = get_from_nested_dicts(my_json["attribute_set"], "source", delete=True)
 
     # TODO Add licencse to tagslist
-    license = my_json["legal"]["copyright"] + " " + my_json["legal"]["license"]
+    license = my_json["legal"]["copyright"]  # + " " + my_json["legal"]["license"]
+    my_json.pop("legal")
     raw = None
     if "video" in my_json["if_file"]["mime_type"].lower():
         url_joined = urljoin(MEDIA_URL, my_json["if_file"]["original"]["relurl"])
@@ -145,6 +151,7 @@ def process_json(my_json, test_mode=False, skip=False):
             my_json.pop("location"),
             my_json.pop("annotations"),
         )
+    my_json.pop("if_file")
     res = interface_discourse.create_topic(
         name,
         None,
@@ -158,10 +165,11 @@ def process_json(my_json, test_mode=False, skip=False):
     topic_name = result_as_dict["topic_slug"]
     topic_id = result_as_dict["topic_id"]
     tags = my_json.pop("tags")
+    tags = [convert_to_tag(x) for x in tags]
     existing_tags = csv_db_funcs.identify("tag", "all-misc-tags", DISCOURSE_METADATA)
     if existing_tags is None:
         existing_tags = []
-    tags = [convert_to_tag(x) for x in tags]
+
     for tag in tags:
         tag_id = csv_db_funcs.identify("tag", tag, DISCOURSE_METADATA)
         if tag_id is None:
@@ -174,15 +182,25 @@ def process_json(my_json, test_mode=False, skip=False):
     if existing_langs is None:
         existing_langs = []
     language = my_json.pop("language")[-1]
-    if language in existing_tags:
+    lagnuage = convert_to_tag(language)
+    if language in existing_langs:
         tags.append(language)
     else:
-        interface_discourse.update_a_tag_group(
-            14, "Languages", existing_langs + [language]
-        )
+        existing_langs.append(language)
+        interface_discourse.update_a_tag_group(14, "Languages", existing_langs)
+        csv_db_funcs.store("tag", "languages", [language], DISCOURSE_METADATA)
         tags.append(language)
-    tags += process_attributes(my_json["attribute_set"], delete=True)
+
+    tags.extend(process_attributes(my_json["attribute_set"], delete=True))
+    print("******************************")
+    print(tags)
+    print("******************************")
     interface_discourse.set_tags_to_topic(topic_name, topic_id, tags)
+    # print("******************************")
+    # print(tags)
+    # print("******************************")
+    # interface_discourse.set_tags_to_topic(topic_name, topic_id, tags)
+
     ## MANIPULATE TAGS EARLIER ONLY!
     discussion_enable = get_from_nested_dicts(
         my_json["attribute_set"], "discussion_enable", delete=True
@@ -197,5 +215,8 @@ def process_json(my_json, test_mode=False, skip=False):
         # interface_discourse.unpin_topic(topic_name, topic_id)
         pass
 
-    csv_db_funcs.append_data(my_json.pop("_id"), discourse_id, UNUSED_DATA, **my_json)
+    csv_db_funcs.append_data(my_json.pop("_id"), topic_id, UNUSED_DATA, **my_json)
+    csv_db_funcs.append_data(
+        topic_id, topic_name, DISCOURSE_TOPIC_IDS, **result_as_dict
+    )
     return my_json
