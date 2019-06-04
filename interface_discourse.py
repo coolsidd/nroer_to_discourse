@@ -205,3 +205,47 @@ def create_topic(
     data = locals()
     data = {k: v for k, v in data.items() if v is not None}
     return post_request(data, url_with_end_point)
+
+
+def set_tags_to_topic(topic_name, topic_id, tags):
+    end_point = "/t/{}/{}.json".format(topic_name, topic_id)
+    url_with_end_point = urljoin(URL, end_point)
+    data = {"tags[]": tags}
+    return put_request(data, url_with_end_point)
+
+
+def update_a_tag_group(group_id, group_name, tags):
+    end_point = "/tag_groups/{}.json".format(group_id)
+    url_with_end_point = urljoin(URL, end_point)
+    data = {"name": group_name, "tag_names": tags}
+    return put_request(data, url_with_end_point)
+
+
+def close_topic(topic_name, topic_id):
+    end_point = "/t/{}/{}/status.json".format(topic_name, topic_id)
+    url_with_end_point = urljoin(URL, end_point)
+    data = {"status": "closed", "enabled": "true"}
+    return put_request(data, url_with_end_point)
+
+
+def open_topic(topic_name, topic_id):
+    end_point = "/t/{}/{}/status.json".format(topic_name, topic_id)
+    url_with_end_point = urljoin(URL, end_point)
+    data = {"status": "closed", "enabled": "false"}
+    return put_request(data, url_with_end_point)
+
+
+def pin_topic(topic_name, topic_id, datetime_obj=None):
+    end_point = "/t/{}/{}/status.json".format(topic_name, topic_id)
+    if datetime_obj is None:
+        datetime_obj = datetime.datetime(year=3019, month=12, day=31)
+    url_with_end_point = urljoin(URL, end_point)
+    data = {"status": "pinned", "enabled": "true", "until": datetime_obj}
+    return put_request(data, url_with_end_point)
+
+
+def unpin_topic(topic_name, topic_id):
+    end_point = "/t/{}/{}/status.json".format(topic_name, topic_id)
+    url_with_end_point = urljoin(URL, end_point)
+    data = {"status": "pinned", "enabled": "false"}
+    return put_request(data, url_with_end_point)
