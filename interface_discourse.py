@@ -73,11 +73,7 @@ def get_request(
     params.setdefault("api_key", API_KEY)
     params.setdefault("api_username", API_USERNAME)
     headers = {"Accept": "application/json; charset=utf-8"}
-    # data.update(args)
-    # data.setdefault("Api-Key" , API_KEY)
-    # data.setdefault("Api-Username", API_USERNAME)
-    # response = requests.get(url, data=data_as_str)
-    response = requests.request(
+    response = _request(
         "GET",
         url,
         json=json,
@@ -92,7 +88,6 @@ def get_request(
     return parse_response(response)
 
 
-@debug_func
 def put_request(
     data,
     url,
@@ -106,11 +101,7 @@ def put_request(
     params.setdefault("api_key", API_KEY)
     params.setdefault("api_username", API_USERNAME)
     headers = {"Accept": "application/json; charset=utf-8"}
-    # data.update(args)
-    # data.setdefault("Api-Key" , API_KEY)
-    # data.setdefault("Api-Username", API_USERNAME)
-    # response = requests.get(url, data=data_as_str)
-    response = requests.request(
+    response = _request(
         "PUT",
         url,
         json=json,
@@ -125,7 +116,6 @@ def put_request(
     return parse_response(response)
 
 
-@debug_func
 def post_request(
     data,
     url,
@@ -145,7 +135,7 @@ def post_request(
     #     "Api-Key": API_KEY,
     #     "Api-Username": API_USERNAME
     # }
-    response = requests.request(
+    response = _request(
         "POST",
         url,
         json=json,
@@ -202,7 +192,7 @@ def upload_image_or_avatar(_type, userid=None, synchronous=False, image=None):
 
 
 def get_tag(tag):
-    end_point = "/tag/{}".format(tag)
+    end_point = "/tags/{}".format(tag)
     url_with_end_point = urljoin(URL, end_point)
     data = {}
     return get_request(data, url_with_end_point)
@@ -245,10 +235,11 @@ def set_tags_to_topic(topic_name, topic_id, tags):
     return put_request(data, url_with_end_point)
 
 
+@debug_func
 def update_a_tag_group(group_id, group_name, tags):
     end_point = "/tag_groups/{}.json".format(group_id)
     url_with_end_point = urljoin(URL, end_point)
-    data = {"name": group_name, "tag_names": tags}
+    data = {"name": group_name, "tag_names[]": tags}
     return put_request(data, url_with_end_point)
 
 
