@@ -10,8 +10,10 @@ from useful_utilities import *
 URL = "http://localhost:9292"
 API_KEY = "8302ca56136b04e4b2b82bc03ca4d4346cb5dc3dad6e3881138b9c232d7d4b94"
 API_USERNAME = "coolsidd"
+RETRIES = 20
 TEST_MODE = False
-
+QUIET_MODE = False
+LAST_RES = None
 # _requst_copy = _request
 # # TODO
 # def enable_test_mode():
@@ -28,21 +30,34 @@ TEST_MODE = False
 def _request(
     _type, url, json, data, headers, files, params, timeout, allow_redirects, **kwargs
 ):
-    return requests.request(
-        _type,
-        url,
-        json=json,
-        data=data,
-        headers=headers,
-        files=files,
-        params=params,
-        timeout=timeout,
-        allow_redirects=allow_redirects,
-        **kwargs
-    )
+    for i in range(RETRIES):
+        res = requests.request(
+            _type,
+            url,
+            json=json,
+            data=data,
+            headers=headers,
+            files=files,
+            params=params,
+            timeout=timeout,
+            allow_redirects=allow_redirects,
+            **kwargs
+        )
+        if res.status_code == 429:
+            time = json.loads(res.content)["extras"]["wait_seconds"]
+            if not QUIET_MODE:
+                pprint(res.content)
+                print("Waiting for throttle...")
+                print("Sleeping for {} seconds".format(time))
+            sleep(int(time))
+        else:
+            return res
 
 
 def parse_response(response):
+    LAST_RES = response
+    if QUIET_MODE:
+        return response
     try:
         pprint(json.loads(response.content))
     except:
