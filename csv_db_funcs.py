@@ -26,13 +26,15 @@ def append_data(nid, did, filename, **kwargs):
 
 
 def identify(name, value, filename):
+    value = str(value)
+    name = str(name)
     with open(filename, "r") as readFile:
         reader = csv.reader(readFile)
         name_found = False
         for row in reader:
             if row[0] == name and row[1] == value:
                 row[-1] = ast.literal_eval(row[-1])
-                return row
+                return row[-1]
             if row[0] == name:
                 name_found = True
     if name_found:
@@ -47,7 +49,7 @@ def identify_name(name, filename):
         for row in reader:
             if row[0] == name:
                 row[-1] = ast.literal_eval(row[-1])
-                return row
+                return row[-1]
         return None
 
 

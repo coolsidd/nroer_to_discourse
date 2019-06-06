@@ -12,8 +12,8 @@ from time import sleep
 
 from urllib.parse import urljoin
 
-with open("./quatub.json", "r") as json_file:
-    my_json = json.load(json_file)
+# with open("./quatub.json", "r") as json_file:
+#     my_json = json.load(json_file)
 
 DISCOURSE_METADATA = "disc_meta.csv"
 UNUSED_DATA = "mongo_unused.csv"
@@ -118,8 +118,6 @@ def process_json(my_json, test_mode=False, skip=True):
         category_id = json.loads(res.content)["category"]["id"]
         if not test_mode:
             csv_db_funcs.store("category", category, category_id, DISCOURSE_METADATA)
-    else:
-        category_id = category_id[-1]
     created_at = my_json.pop("created_at")
     created_at = datetime.datetime.strptime(created_at.split()[0], "%d/%m/%Y")
     source = get_from_nested_dicts(my_json["attribute_set"], "source", delete=True)
@@ -212,9 +210,6 @@ def process_json(my_json, test_mode=False, skip=True):
         tags.append(language)
 
     tags.extend(process_attributes(my_json["attribute_set"], delete=True))
-    print("******************************")
-    print(tags)
-    print("******************************")
     interface_discourse.set_tags_to_topic(topic_name, topic_id, tags)
     # print("******************************")
     # print(tags)
