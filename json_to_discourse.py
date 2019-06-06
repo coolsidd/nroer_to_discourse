@@ -18,6 +18,8 @@ with open("./quatub.json", "r") as json_file:
 DISCOURSE_METADATA = "disc_meta.csv"
 UNUSED_DATA = "mongo_unused.csv"
 DISCOURSE_TOPIC_IDS = "disc_topics.csv"
+DISCOURSE_USER_IDS = "disc_users.csv"
+DISCOURSE_EXISTING_USERS = "disc_users_created.csv"
 
 MEDIA_URL = "https://nroer.gov.in/media/"
 
@@ -91,7 +93,7 @@ def process_attributes(attr_list, delete=False):
     return tags
 
 
-def process_json(my_json, test_mode=False, skip=False):
+def process_json(my_json, test_mode=False, skip=True):
     prev_data = csv_db_funcs.identify_name(my_json["_id"], UNUSED_DATA)
     if prev_data is not None and skip is True:
         return prev_data
@@ -107,8 +109,11 @@ def process_json(my_json, test_mode=False, skip=False):
     )
     name = my_json.pop("name")
     alt_name = my_json.pop("altnames")
+    if category is None:
+        category = "Miscelaneous"
     category_id = csv_db_funcs.identify("category", category, DISCOURSE_METADATA)
     if category_id is None:
+
         res = interface_discourse.create_category(category, get_rand_color(), "FFFFFF")
         category_id = json.loads(res.content)["category"]["id"]
         if not test_mode:
@@ -152,6 +157,21 @@ def process_json(my_json, test_mode=False, skip=False):
             my_json.pop("annotations"),
         )
     my_json.pop("if_file")
+
+    uid = my_json["created_by"]
+    user_data = csv_db_funcs.identify("user", uid, DISCOURSE_USER_IDS)
+
+    if user_data is None:
+        user_data = [-1, "NoneUser", None]
+    else:
+        print("Creating New user!!!!")
+    if user_data[2] is None:
+        user_data[2] = "{}@sample.com".format(user_data[1])
+    if csv_db_funcs.identify("user", uid, DISCOURSE_EXISTING_USERS) is None:
+        interface_discourse.create_user(
+            user_data[1], user_data[2], "samplepassword", user_data[1], active=True
+        )
+    interface_discourse.API_USERNAME = user_data[1]
     res = interface_discourse.create_topic(
         name,
         None,
