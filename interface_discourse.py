@@ -12,6 +12,36 @@ import unittest.mock
 import requests.models
 
 
+def testable(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        try:
+            if self.TEST_MODE:
+                sample = csv_db_funcs.identify(
+                    "samples", func.__name__, self.PATHPATH_TO_SAMPLES_CSV
+                )
+                if ((sample is None) or (sample == [])) and (
+                    not self.TEST_MODE_DEFAULT_EMPTY
+                ):
+                    raise NotImplementedError(
+                        "Add sample response for {} to {} or pass '{} = True' as an argument".format(
+                            func.__name__, self.PATH_TO_SAMPLES_CSV, default_none_key
+                        )
+                    )
+                else:
+                    test_response = unittest.mock.Mock(spec=requests.models.Response)
+                    test_response.content = json.dumps(sample).encode("utf-8")
+                    test_response.status_code = 200
+                    test_response.ok = True
+                    test_response.json = lambda: sample
+                    return self.parse_response(test_response)
+
+            else:
+                return func(self, *args, **kwargs)
+        except KeyError as e:
+            return func(self, *args, **kwargs)
+
+    return wrapper
 
 
 class discourse_interface:
@@ -186,18 +216,21 @@ class discourse_interface:
         )
         return parse_response(response)
 
+    @testable
     def get_categories(self,):
         end_point = "/categories.json"
         url_with_end_point = urljoin(URL, end_point)
         data = dict()
         return self.get_request(data, url_with_end_point)
 
+    @testable
     def create_category(self, name, color, text_color):
         end_point = "/categories.json"
         url_with_end_point = urljoin(URL, end_point)
         data = {"name": name, "color": color, "text_color": text_color}
         return self.post_request(data, url_with_end_point)
 
+    @testable
     def create_user(
         self,
         name,
@@ -213,6 +246,7 @@ class discourse_interface:
         data = locals()
         return self.post_request(data, url_with_end_point)
 
+    @testable
     def upload_image_or_avatar(self, _type, userid=None, synchronous=False, image=None):
         assert type(userid) == int
         assert _type in {
@@ -230,24 +264,28 @@ class discourse_interface:
         files = {"file": open(image, "rb")}
         return self.post_request(data, url_with_end_point, files=files)
 
+    @testable
     def get_tag(self, tag):
         end_point = "/tags/{}".format(tag)
         url_with_end_point = urljoin(URL, end_point)
         data = {}
         return self.get_request(data, url_with_end_point)
 
+    @testable
     def get_tag_groups(self,):
         end_point = "/tag_groups.json"
         url_with_end_point = urljoin(URL, end_point)
         data = locals()
         return self.get_request(data, url_with_end_point)
 
+    @testable
     def create_new_tag_group(self, name, tag_names):
         end_point = "/tag_groups.json"
         url_with_end_point = urljoin(URL, end_point)
         data = locals()
         return self.post_request(data, url_with_end_point)
 
+    @testable
     def create_topic(
         self,
         title,
@@ -264,30 +302,35 @@ class discourse_interface:
         data = {k: v for k, v in data.items() if v is not None}
         return self.post_request(data, url_with_end_point)
 
+    @testable
     def set_tags_to_topic(self, topic_name, topic_id, tags):
         end_point = "/t/{}/{}.json".format(topic_name, topic_id)
         url_with_end_point = urljoin(URL, end_point)
         data = {"tags[]": tags}
         return self.put_request(data, url_with_end_point)
 
+    @testable
     def update_a_tag_group(self, group_id, group_name, tags):
         end_point = "/tag_groups/{}.json".format(group_id)
         url_with_end_point = urljoin(URL, end_point)
         data = {"name": group_name, "tag_names[]": tags}
         return self.put_request(data, url_with_end_point)
 
+    @testable
     def close_topic(self, topic_name, topic_id):
         end_point = "/t/{}/{}/status.json".format(topic_name, topic_id)
         url_with_end_point = urljoin(URL, end_point)
         data = {"status": "closed", "enabled": "true"}
         return self.put_request(data, url_with_end_point)
 
+    @testable
     def open_topic(self, topic_name, topic_id):
         end_point = "/t/{}/{}/status.json".format(topic_name, topic_id)
         url_with_end_point = urljoin(URL, end_point)
         data = {"status": "closed", "enabled": "false"}
         return self.put_request(data, url_with_end_point)
 
+    @testable
     def pin_topic(self, topic_name, topic_id, datetime_obj=None):
         end_point = "/t/{}/{}/status.json".format(topic_name, topic_id)
         if datetime_obj is None:
@@ -296,6 +339,7 @@ class discourse_interface:
         data = {"status": "pinned", "enabled": "true", "until": datetime_obj}
         return self.put_request(data, url_with_end_point)
 
+    @testable
     def unpin_topic(self, topic_name, topic_id):
         end_point = "/t/{}/{}/status.json".format(topic_name, topic_id)
         url_with_end_point = urljoin(URL, end_point)
