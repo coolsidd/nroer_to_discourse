@@ -12,8 +12,8 @@ from time import sleep
 
 from urllib.parse import urljoin
 
-# with open("./quatub.json", "r") as json_file:
-#     my_json = json.load(json_file)
+with open("./intestine.json", "r") as json_file:
+    my_json = json.load(json_file)
 
 DISCOURSE_METADATA = "disc_meta.csv"
 UNUSED_DATA = "mongo_unused.csv"
@@ -93,7 +93,13 @@ def process_attributes(attr_list, delete=False):
     return tags
 
 
-def process_json(my_json, test_mode=False, skip=True):
+def process_json(disc_interface, my_json, test_mode=False, skip=True):
+    if type(disc_interface) != interface_discourse.discourse_interface:
+        raise NotImplementedError(
+            "param disc_interface should be of type {}".format(
+                interface_discourse.discourse_interface
+            )
+        )
     prev_data = csv_db_funcs.identify_name(my_json["_id"], UNUSED_DATA)
     if prev_data is not None and skip is True:
         return prev_data
@@ -114,7 +120,7 @@ def process_json(my_json, test_mode=False, skip=True):
     category_id = csv_db_funcs.identify("category", category, DISCOURSE_METADATA)
     if category_id is None:
 
-        res = interface_discourse.create_category(category, get_rand_color(), "FFFFFF")
+        res = disc_interface.create_category(category, get_rand_color(), "FFFFFF")
         category_id = json.loads(res.content)["category"]["id"]
         if not test_mode:
             csv_db_funcs.store("category", category, category_id, DISCOURSE_METADATA)
@@ -166,11 +172,11 @@ def process_json(my_json, test_mode=False, skip=True):
     if user_data[2] is None:
         user_data[2] = "{}@sample.com".format(user_data[1])
     if csv_db_funcs.identify("user", uid, DISCOURSE_EXISTING_USERS) is None:
-        interface_discourse.create_user(
+        disc_interface.create_user(
             user_data[1], user_data[2], "samplepassword", user_data[1], active=True
         )
-    interface_discourse.API_USERNAME = user_data[1]
-    res = interface_discourse.create_topic(
+    disc_interface.API_USERNAME = user_data[1]
+    res = disc_interface.create_topic(
         name,
         None,
         raw,
@@ -194,7 +200,7 @@ def process_json(my_json, test_mode=False, skip=True):
             csv_db_funcs.store("tag", tag, 13, DISCOURSE_METADATA)
             csv_db_funcs.store("tag", "all-misc-tags", [tag], DISCOURSE_METADATA)
         existing_tags.append(tag)
-        interface_discourse.update_a_tag_group(13, "Misc Tags", existing_tags)
+        disc_interface.update_a_tag_group(13, "Misc Tags", existing_tags)
 
     existing_langs = csv_db_funcs.identify("tag", "languages", DISCOURSE_METADATA)
     if existing_langs is None:
@@ -205,29 +211,29 @@ def process_json(my_json, test_mode=False, skip=True):
         tags.append(language)
     else:
         existing_langs.append(language)
-        interface_discourse.update_a_tag_group(14, "Languages", existing_langs)
+        disc_interface.update_a_tag_group(14, "Languages", existing_langs)
         csv_db_funcs.store("tag", "languages", [language], DISCOURSE_METADATA)
         tags.append(language)
 
     tags.extend(process_attributes(my_json["attribute_set"], delete=True))
-    interface_discourse.set_tags_to_topic(topic_name, topic_id, tags)
+    disc_interface.set_tags_to_topic(topic_name, topic_id, tags)
     # print("******************************")
     # print(tags)
     # print("******************************")
-    # interface_discourse.set_tags_to_topic(topic_name, topic_id, tags)
+    # disc_interface.set_tags_to_topic(topic_name, topic_id, tags)
 
     ## MANIPULATE TAGS EARLIER ONLY!
     discussion_enable = get_from_nested_dicts(
         my_json["attribute_set"], "discussion_enable", delete=True
     )
     if discussion_enable is None or discussion_enable is True:
-        interface_discourse.open_topic(topic_name, topic_id)
+        disc_interface.open_topic(topic_name, topic_id)
     else:
-        interface_discourse.close_topic(topic_name, topic_id)
+        disc_interface.close_topic(topic_name, topic_id)
     if my_json.pop("featured"):
-        interface_discourse.pin_topic(topic_name, topic_id)
+        disc_interface.pin_topic(topic_name, topic_id)
     else:
-        # interface_discourse.unpin_topic(topic_name, topic_id)
+        # disc_interface.unpin_topic(topic_name, topic_id)
         pass
 
     csv_db_funcs.append_data(my_json.pop("_id"), topic_id, UNUSED_DATA, **my_json)
