@@ -153,6 +153,34 @@ class discourse_interface:
         )
         return self.parse_response(response)
 
+    def delete_request(
+        self,
+        data,
+        url,
+        files={},
+        params={},
+        json={},
+        timeout=None,
+        allow_redirects=False,
+        **kwargs
+    ):
+        params.setdefault("api_key", self.API_KEY)
+        params.setdefault("api_username", self.API_USERNAME)
+        headers = {"Accept": "application/json; charset=utf-8"}
+        response = self._request(
+            "DELETE",
+            url,
+            json=json,
+            data=data,
+            headers=headers,
+            files=files,
+            params=params,
+            timeout=timeout,
+            allow_redirects=allow_redirects,
+            **kwargs
+        )
+        return self.parse_response(response)
+
     def put_request(
         self,
         data,
