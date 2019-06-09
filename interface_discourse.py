@@ -372,3 +372,9 @@ class discourse_interface:
         url_with_end_point = urljoin(self.URL, end_point)
         data = {"status": "pinned", "enabled": "false"}
         return self.put_request(data, url_with_end_point)
+
+    @testable
+    def delete_category(self, category_id):
+        end_point = "/categories/{}".format(category_id)
+        url_with_end_point = urljoin(self.URL, end_point)
+        return self.delete_request(None, url_with_end_point)
