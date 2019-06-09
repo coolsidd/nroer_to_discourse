@@ -18,7 +18,7 @@ def testable(func):
         try:
             if self.TEST_MODE:
                 sample = csv_db_funcs.identify(
-                    "samples", func.__name__, self.PATHPATH_TO_SAMPLES_CSV
+                    "samples", func.__name__, self.PATH_TO_SAMPLES_CSV
                 )
                 if ((sample is None) or (sample == [])) and (
                     not self.TEST_MODE_DEFAULT_EMPTY
@@ -216,7 +216,7 @@ class discourse_interface:
         return self.parse_response(response)
 
     @testable
-    def get_categories(self,):
+    def get_categories(self):
         end_point = "/categories.json"
         url_with_end_point = urljoin(self.URL, end_point)
         data = dict()

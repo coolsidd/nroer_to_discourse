@@ -168,13 +168,15 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True):
     if user_data is None:
         user_data = [-1, "NoneUser", None]
     else:
-        print("Creating New user!!!!")
+        print("Existing user found!!!!")
     if user_data[2] is None:
         user_data[2] = "{}@sample.com".format(user_data[1])
     if csv_db_funcs.identify("user", uid, DISCOURSE_EXISTING_USERS) is None:
-        disc_interface.create_user(
+        print("Creating new user")
+        new_user_data = disc_interface.create_user(
             user_data[1], user_data[2], "samplepassword", user_data[1], active=True
-        )
+        ).json["user_id"]
+        csv_db_funcs.store("user", uid, new_user_data, DISCOURSE_EXISTING_USERS)
     disc_interface.API_USERNAME = user_data[1]
     res = disc_interface.create_topic(
         name,
