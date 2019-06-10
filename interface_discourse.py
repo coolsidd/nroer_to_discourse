@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import requests
+from time import sleep
 import datetime
 from pprint import pprint
 from functools import wraps
@@ -44,12 +45,15 @@ def testable(func):
     return wrapper
 
 
+ADMIN_NAME = "coolsidd"
+
+
 class discourse_interface:
     def __init__(
         self,
         URL="http://localhost",
         API_KEY="6e325593588c04671f879c99b120c3da656772209ffc60b056ef6a8979e32ce4",
-        API_USERNAME="coolsidd",
+        API_USERNAME=ADMIN_NAME,
         RETRIES=20,
         TEST_MODE=False,
         TEST_MODE_DEFAULT_EMPTY=False,
@@ -58,6 +62,7 @@ class discourse_interface:
     ):
         for key, value in locals().items():
             setattr(self, key, value)
+        self.LAST_RES = None
 
     # _requst_copy = _request
     # # TODO
@@ -83,6 +88,7 @@ class discourse_interface:
         allow_redirects,
         **kwargs
     ):
+        self.LAST_RES = None
         for i in range(self.RETRIES):
             res = requests.request(
                 _type,
@@ -97,7 +103,7 @@ class discourse_interface:
                 **kwargs
             )
             if res.status_code == 429:
-                time = json.loads(res.content)["extras"]["wait_seconds"]
+                time = res.json()["extras"]["wait_seconds"]
                 if not self.QUIET_MODE:
                     pprint(res.content)
                     print("Waiting for throttle...")
@@ -107,7 +113,7 @@ class discourse_interface:
                 return res
 
     def parse_response(self, response):
-        LAST_RES = response
+        self.LAST_RES = response
         if self.QUIET_MODE:
             return response
         try:
@@ -373,7 +379,6 @@ class discourse_interface:
         data = {"status": "pinned", "enabled": "false"}
         return self.put_request(data, url_with_end_point)
 
-    @testable
     def delete_category(self, category_id):
         end_point = "/categories/{}".format(category_id)
         url_with_end_point = urljoin(self.URL, end_point)

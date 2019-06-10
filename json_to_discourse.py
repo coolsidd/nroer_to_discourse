@@ -100,6 +100,8 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True):
                 interface_discourse.discourse_interface
             )
         )
+    if my_json.pop("status") == "DRAFT":
+        return None
     prev_data = csv_db_funcs.identify_name(my_json["_id"], UNUSED_DATA)
     if prev_data is not None and skip is True:
         return prev_data
@@ -175,7 +177,7 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True):
         print("Creating new user")
         new_user_data = disc_interface.create_user(
             user_data[1], user_data[2], "samplepassword", user_data[1], active=True
-        ).json["user_id"]
+        ).json()["user_id"]
         csv_db_funcs.store("user", uid, new_user_data, DISCOURSE_EXISTING_USERS)
     disc_interface.API_USERNAME = user_data[1]
     res = disc_interface.create_topic(
@@ -186,7 +188,8 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True):
         archetype=access_policy,
         created_at=created_at,
     )
-    result_as_dict = json.loads(res.content)
+    disc_interface.API_USERNAME = interface_discourse.ADMIN_NAME
+    result_as_dict = res.json()
     discourse_id = result_as_dict["id"]
     topic_name = result_as_dict["topic_slug"]
     topic_id = result_as_dict["topic_id"]
