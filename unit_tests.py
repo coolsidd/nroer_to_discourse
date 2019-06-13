@@ -80,9 +80,11 @@ def get_funtions(module):
     ]
 
 
-def sample_json_test():
-    interface_discourse.TEST_MODE = True
-    interface_discourse.TEST_MODE_DEFAULT_EMPTY = False
+def sample_json_test(sample_json, interface_instance=None):
+    assert interface_instance.TEST_MODE is True
+    if interface_instance is None:
+        interface_instance = interface_discourse.discourse_interface(TEST_MODE=True)
+    json_to_discourse.process_json(interface_instance, sample_json)
 
 
 def mahatma_gandhi_json_test():
