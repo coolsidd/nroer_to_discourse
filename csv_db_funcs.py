@@ -12,17 +12,24 @@ def enable_testing():
     store = debug_func(store)
 
 
-def append_data(nid, did, filename, **kwargs):
-    with open(filename, "r+") as readFile:
-        reader = csv.reader(readFile)
-        writer = csv.writer(readFile)
-        lines = list(reader)
-        i = 0
-        for row in lines:
-            if row[0] == [nid] or row[1] == [did]:
-                print("failure")
-                raise AssertionError
-        writer.writerows([[nid, did, kwargs]])
+def append_data(nid, did, filename, data, append=False):
+    if append:
+        with open(filename, "a") as readFile:
+            writer = csv.writer(readFile)
+            writer.writerows([[nid, did, data]])
+            readFile.flush()
+            return
+    else:
+        with open(filename, "r+") as readFile:
+            reader = csv.reader(readFile)
+            writer = csv.writer(readFile)
+            lines = list(reader)
+            i = 0
+            for row in lines:
+                if row[0] == [nid] or row[1] == [did]:
+                    print("failure")
+                    raise AssertionError
+            writer.writerows([[nid, did, data]])
 
 
 def identify(name, value, filename):
@@ -66,7 +73,6 @@ def store(name, value, data, filename):
                 changed = True
             writer.writerow(row)
         if not changed:
-            print("Addding data")
             writer.writerow([name, value, data])
         temp_file.flush()
         csv_file.flush()
