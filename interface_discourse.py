@@ -42,6 +42,7 @@ def testable(func):
         except KeyError as e:
             return func(self, *args, **kwargs)
 
+    # wrapper = useful_utilities.debug_func(wrapper)
     return wrapper
 
 
@@ -89,6 +90,7 @@ class discourse_interface:
         **kwargs
     ):
         self.LAST_RES = None
+        self.LAST_RQST = locals()
         for i in range(self.RETRIES):
             res = requests.request(
                 _type,
@@ -102,8 +104,12 @@ class discourse_interface:
                 allow_redirects=allow_redirects,
                 **kwargs
             )
+            self.LAST_RES = res
             if res.status_code == 429:
-                time = res.json()["extras"]["wait_seconds"]
+                try:
+                    time = res.json()["extras"]["wait_seconds"]
+                except Exception as e:
+                    time = 10
                 if not self.QUIET_MODE:
                     pprint(res.content)
                     print("Waiting for throttle...")
@@ -113,7 +119,6 @@ class discourse_interface:
                 return res
 
     def parse_response(self, response):
-        self.LAST_RES = response
         if self.QUIET_MODE:
             return response
         try:
@@ -126,6 +131,8 @@ class discourse_interface:
             print("Access denied")
         elif response.status_code == 400:
             print("Missing Param/Invalid Request")
+        elif response.status_code == 422:
+            raise NotImplementedError
         else:
             print("Unknown Response")
             print(response.status_code)
@@ -383,3 +390,10 @@ class discourse_interface:
         end_point = "/categories/{}".format(category_id)
         url_with_end_point = urljoin(self.URL, end_point)
         return self.delete_request(None, url_with_end_point)
+
+    def impersonate_user(self, username_or_email):
+        end_point = "admin/impersonate"
+        url_with_end_point = urljoin(self.URL, end_point)
+        data = locals()
+        self.API_USERNAME = username_or_email
+        return self.post_request(data, url_with_end_point)

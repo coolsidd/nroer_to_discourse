@@ -12,8 +12,8 @@ from time import sleep
 
 from urllib.parse import urljoin
 
-with open("./intestine.json", "r") as json_file:
-    my_json = json.load(json_file)
+# with open("./intestine.json", "r") as json_file:
+#     my_json = json.load(json_file)
 
 DISCOURSE_METADATA = "disc_meta.csv"
 UNUSED_DATA = "mongo_unused.csv"
@@ -59,7 +59,10 @@ def process_attributes(attr_list, delete=False):
                 values.append(func(k))
             return values
         else:
-            return [func(obj)]
+            if func(obj) is not None:
+                return [func(obj)]
+            else:
+                return []
 
     if delete is False:
         attr_list = attr_list.copy()
@@ -93,93 +96,156 @@ def process_attributes(attr_list, delete=False):
     return tags
 
 
-def process_json(disc_interface, my_json, test_mode=False, skip=True):
+def process_json(disc_interface, my_json, test_mode=False, skip=True, force=False):
     if type(disc_interface) != interface_discourse.discourse_interface:
-        raise NotImplementedError(
-            "param disc_interface should be of type {}".format(
-                interface_discourse.discourse_interface
+        if not force:
+            raise NotImplementedError(
+                "param disc_interface should be of type {}".format(
+                    interface_discourse.discourse_interface
+                )
             )
-        )
-    if my_json.pop("status") == "DRAFT":
+
+    if my_json.pop("status", None) == "DRAFT":
         return None
-    prev_data = csv_db_funcs.identify_name(my_json["_id"], UNUSED_DATA)
-    if prev_data is not None and skip is True:
-        return prev_data
-    access_policy = my_json.pop("access_policy")
+
+    if skip is True:
+        prev_data = csv_db_funcs.identify_name(my_json["_id"], UNUSED_DATA)
+        if prev_data is not None:
+            print("Already_done!")
+            return prev_data
+
+    access_policy = my_json.pop("access_policy", None)
     if access_policy == "PUBLIC":
         access_policy = None
     else:
         pprint(my_json)
         # TODO
-        raise NotImplementedError
+        if not force:
+            raise NotImplementedError
     category = get_from_nested_dicts(
         my_json["attribute_set"], "educationalsubject", delete=True
     )
-    name = my_json.pop("name")
-    alt_name = my_json.pop("altnames")
+    name = my_json.pop("name", None)
+    if name is None or name == "" or name == "None":
+        name = get_from_nested_dicts(my_json["attribute_set"], "name_eng", delete=True)
+        if name is None or name == "":
+            if not force:
+                raise NotImplementedError("Name is empty!")
+
+    alt_name = my_json.pop("altnames", None)
+    if alt_name is None:
+        alt_name = name
     if category is None:
         category = "Miscelaneous"
-    category_id = csv_db_funcs.identify("category", category, DISCOURSE_METADATA)
+    category_id = csv_db_funcs.identify(
+        "category", category.title(), DISCOURSE_METADATA
+    )
     if category_id is None:
-
         res = disc_interface.create_category(category, get_rand_color(), "FFFFFF")
-        category_id = json.loads(res.content)["category"]["id"]
-        if not test_mode:
+        if res.status_code == 422:
+            pass
+        else:
+            category_id = json.loads(res.content)["category"]["id"]
             csv_db_funcs.store("category", category, category_id, DISCOURSE_METADATA)
-    created_at = my_json.pop("created_at")
-    created_at = datetime.datetime.strptime(created_at.split()[0], "%d/%m/%Y")
+    created_at = my_json.pop("created_at", None)
+    if created_at is not None:
+        created_at = datetime.datetime.strptime(created_at.split()[0], "%d/%m/%Y")
+
     source = get_from_nested_dicts(my_json["attribute_set"], "source", delete=True)
 
     # TODO Add licencse to tagslist
-    license = my_json["legal"]["copyright"]  # + " " + my_json["legal"]["license"]
-    my_json.pop("legal")
+    try:
+        license = my_json["legal"]["copyright"]  # + " " + my_json["legal"]["license"]
+        my_json.pop("legal")
+    except:
+        license = ""
     raw = None
-    if "video" in my_json["if_file"]["mime_type"].lower():
-        url_joined = urljoin(MEDIA_URL, my_json["if_file"]["original"]["relurl"])
-        # thumbnail = urljoin(MEDIA_URL, my_json["if_file"]["thumbnail"]["relurl"])
-        raw = markdown_video(
-            alt_name,
-            my_json.pop("content"),
-            # thumbnail,
-            url_joined,
-            license,
-            source,
-            my_json.pop("author_set"),
-            my_json.pop("collection_set"),
-            my_json.pop("location"),
-            my_json.pop("annotations"),
+    mime_type = my_json["if_file"].pop("mime_type", None)
+    if mime_type is None:
+        if not force:
+            raise NotImplementedError("Unkown mime type")
+    rel_url = my_json["if_file"]["original"]["relurl"]
+    if rel_url is not None:
+        url_joined = urljoin(MEDIA_URL, rel_url)
+    else:
+        url_joined = my_json.pop("url")
+    if url_joined is None:
+        if not force:
+            raise NotImplementedError("No URL found")
+    content = my_json.pop("content", None)
+    if content is None or content == "":
+        content = my_json.pop("content_org", None)
+    if content is None or content == "":
+        content = get_from_nested_dicts(
+            my_json["attribute_set"], "description_eng", delete=True
         )
-    elif "image" in my_json["if_file"]["mime_type"].lower():
-        url_joined = urljoin(MEDIA_URL, my_json["if_file"]["original"]["relurl"])
-        raw = markdown_image(
-            alt_name,
-            my_json.pop("content"),
-            url_joined,
-            license,
-            source,
-            my_json.pop("author_set"),
-            my_json.pop("collection_set"),
-            my_json.pop("location"),
-            my_json.pop("annotations"),
-        )
-    my_json.pop("if_file")
+
+        if not force and content is None:
+            raise NotImplementedError("No Content")
+    raw = markdown_image(
+        alt_name,
+        content,
+        url_joined,
+        license,
+        source,
+        my_json.pop("author_set"),
+        my_json.pop("collection_set"),
+        my_json.pop("location"),
+        my_json.pop("annotations"),
+        force,
+    )
+    # if "video" in my_json["if_file"]["mime_type"].lower():
+    #     url_joined = urljoin(MEDIA_URL, my_json["if_file"]["original"]["relurl"])
+    #     # thumbnail = urljoin(MEDIA_URL, my_json["if_file"]["thumbnail"]["relurl"])
+    #     raw = markdown_video(
+    #         alt_name,
+    #         my_json.pop("content"),
+    #         # thumbnail,
+    #         url_joined,
+    #         license,
+    #         source,
+    #         my_json.pop("author_set"),
+    #         my_json.pop("collection_set"),
+    #         my_json.pop("location"),
+    #         my_json.pop("annotations"),
+    #     )
+    # elif "image" in my_json["if_file"]["mime_type"].lower():
+    #     url_joined = urljoin(MEDIA_URL, my_json["if_file"]["original"]["relurl"])
+    #     raw = markdown_image(
+    #         alt_name,
+    #         my_json.pop("content"),
+    #         url_joined,
+    #         license,
+    #         source,
+    #         my_json.pop("author_set"),
+    #         my_json.pop("collection_set"),
+    #         my_json.pop("location"),
+    #         my_json.pop("annotations"),
+    #     )
+    my_json.pop("if_file", None)
 
     uid = my_json["created_by"]
     user_data = csv_db_funcs.identify("user", uid, DISCOURSE_USER_IDS)
 
     if user_data is None:
         user_data = [-1, "NoneUser", None]
+        uid = -1
     else:
-        print("Existing user found!!!!")
+        pass
     if user_data[2] is None:
         user_data[2] = "{}@sample.com".format(user_data[1])
     if csv_db_funcs.identify("user", uid, DISCOURSE_EXISTING_USERS) is None:
         print("Creating new user")
+        print(user_data)
         new_user_data = disc_interface.create_user(
             user_data[1], user_data[2], "samplepassword", user_data[1], active=True
         ).json()["user_id"]
         csv_db_funcs.store("user", uid, new_user_data, DISCOURSE_EXISTING_USERS)
     disc_interface.API_USERNAME = user_data[1]
+    # print(raw)
+    if raw is None:
+        if not force:
+            raise NotImplementedError("The body generated was none!")
     res = disc_interface.create_topic(
         name,
         None,
@@ -188,6 +254,16 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True):
         archetype=access_policy,
         created_at=created_at,
     )
+    if res.status_code == 422:
+        for i in range(200):
+            res = disc_interface.create_topic(
+                name + " #{}".format(i),
+                None,
+                raw,
+                category=category_id,
+                archetype=access_policy,
+                created_at=created_at,
+            )
     disc_interface.API_USERNAME = interface_discourse.ADMIN_NAME
     result_as_dict = res.json()
     discourse_id = result_as_dict["id"]
@@ -195,17 +271,19 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True):
     topic_id = result_as_dict["topic_id"]
     tags = my_json.pop("tags")
     tags = [convert_to_tag(x) for x in tags]
-    existing_tags = csv_db_funcs.identify("tag", "all-misc-tags", DISCOURSE_METADATA)
+    # existing_tags = csv_db_funcs.identify("tag", "all-misc-tags", DISCOURSE_METADATA)
+    existing_tags = None
     if existing_tags is None:
         existing_tags = []
 
     for tag in tags:
-        tag_id = csv_db_funcs.identify("tag", tag, DISCOURSE_METADATA)
-        if tag_id is None:
-            csv_db_funcs.store("tag", tag, 13, DISCOURSE_METADATA)
-            csv_db_funcs.store("tag", "all-misc-tags", [tag], DISCOURSE_METADATA)
+        # tag_id = csv_db_funcs.identify("tag", tag, DISCOURSE_METADATA)
+        # if tag_id is None:
+        #     pass
+        # csv_db_funcs.store("tag", tag, 8, DISCOURSE_METADATA)
+        # csv_db_funcs.store("tag", "all-misc-tags", [tag], DISCOURSE_METADATA)
         existing_tags.append(tag)
-        disc_interface.update_a_tag_group(13, "Misc Tags", existing_tags)
+        # disc_interface.update_a_tag_group(8, "Misc Tags", existing_tags)
 
     existing_langs = csv_db_funcs.identify("tag", "languages", DISCOURSE_METADATA)
     if existing_langs is None:
@@ -216,11 +294,12 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True):
         tags.append(language)
     else:
         existing_langs.append(language)
-        disc_interface.update_a_tag_group(14, "Languages", existing_langs)
+        disc_interface.update_a_tag_group(7, "Languages", existing_langs)
         csv_db_funcs.store("tag", "languages", [language], DISCOURSE_METADATA)
         tags.append(language)
 
     tags.extend(process_attributes(my_json["attribute_set"], delete=True))
+    tags.append(mime_type)
     disc_interface.set_tags_to_topic(topic_name, topic_id, tags)
     # print("******************************")
     # print(tags)
@@ -241,8 +320,10 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True):
         # disc_interface.unpin_topic(topic_name, topic_id)
         pass
 
-    csv_db_funcs.append_data(my_json.pop("_id"), topic_id, UNUSED_DATA, **my_json)
     csv_db_funcs.append_data(
-        topic_id, topic_name, DISCOURSE_TOPIC_IDS, **result_as_dict
+        my_json.pop("_id"), topic_id, UNUSED_DATA, my_json, append=True
+    )
+    csv_db_funcs.append_data(
+        topic_id, topic_name, DISCOURSE_TOPIC_IDS, result_as_dict, append=True
     )
     return my_json
