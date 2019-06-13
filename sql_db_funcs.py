@@ -16,20 +16,17 @@ def identify(name_entered, value_entered, filename):
 		return None
 
 def store(table_name, value_entered, data_entered, db_name):
-        table_name = str(table_name)
-        value_entered = str(value_entered)
+	table_name = str(table_name)
+	value_entered = str(value_entered)
+	connect_me = sqlite3.connect(db_name)
+	cur = connect_me.cursor()	
+	cur.execute("CREATE TABLE IF NOT EXISTS {} (value TEXT, data TEXT)".format(table_name))
+	cur.execute("INSERT INTO {} VALUES(?,?)".format(table_name), (value_entered, data_entered))
+	connect_me.commit()
+	connect_me.close()	
 
-        connect_me = sqlite3.connect(db_name)
-        cur = connect_me.cursor()
-        data_check = (cur.execute("SELECT COUNT(*) FROM {} WHERE value=?", .format(table_name), (value_entered))).fetchone()[0]
-
-        if data_check != 0:
-                cur.execute("UPDATE {} SET data=data+{} WHERE value=?", .format(table_name,data_entered), (value_entered))
-
-        else:
-                cur.execute("INSERT INTO {} VALUES(?,?)", .format(table_name), (value_entered, data_entered))
-
-        connect_me.commit()
-        connect_me.close()
-
-
+store('TEST12','ayushagr','hbcse','disc_meta.db')
+store('TEST12','ayushagr','bits', 'disc_meta.db')
+print(identify('TEST12','ayushagr','disc_meta.db'))
+store('category','kanav','mor','disc_meta.db')
+store('TEST5','ayush','the great','disc_meta.db')
