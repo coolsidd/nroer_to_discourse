@@ -6,21 +6,16 @@ import sys
 from pprint import pprint
 import interface_discourse
 import datetime
-import csv_db_funcs
+import sql_db_funcs
 from markdown import *
 from time import sleep
 
 from urllib.parse import urljoin
 
-# with open("./intestine.json", "r") as json_file:
-#     my_json = json.load(json_file)
+with open("./intestine.json", "r") as json_file:
+    my_json = json.load(json_file)
 
-DISCOURSE_METADATA = "disc_meta.csv"
-UNUSED_DATA = "mongo_unused.csv"
-DISCOURSE_TOPIC_IDS = "disc_topics.csv"
-DISCOURSE_USER_IDS = "disc_users.csv"
-DISCOURSE_EXISTING_USERS = "disc_users_created.csv"
-
+DISCOURSE_DB = "./discourse_db.db"
 MEDIA_URL = "https://nroer.gov.in/media/"
 
 
@@ -109,10 +104,10 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
         return None
 
     if skip is True:
-        prev_data = csv_db_funcs.identify_name(my_json["_id"], UNUSED_DATA)
+        prev_data = sql_db_funcs.identify("unused_data", my_json["_id"], DISCOURSE_DB)
         if prev_data is not None:
             print("Already_done!")
-            return prev_data
+            return json.loads(prev_data)
 
     access_policy = my_json.pop("access_policy", None)
     if access_policy == "PUBLIC":
@@ -137,16 +132,14 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
         alt_name = name
     if category is None:
         category = "Miscelaneous"
-    category_id = csv_db_funcs.identify(
-        "category", category.title(), DISCOURSE_METADATA
-    )
+    category_id = sql_db_funcs.identify("category", category.title(), DISCOURSE_DB)
     if category_id is None:
         res = disc_interface.create_category(category, get_rand_color(), "FFFFFF")
         if res.status_code == 422:
             pass
         else:
             category_id = json.loads(res.content)["category"]["id"]
-            csv_db_funcs.store("category", category, category_id, DISCOURSE_METADATA)
+            sql_db_funcs.store("category", category, category_id, DISCOURSE_DB)
     created_at = my_json.pop("created_at", None)
     if created_at is not None:
         created_at = datetime.datetime.strptime(created_at.split()[0], "%d/%m/%Y")
@@ -194,38 +187,10 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
         my_json.pop("annotations"),
         force,
     )
-    # if "video" in my_json["if_file"]["mime_type"].lower():
-    #     url_joined = urljoin(MEDIA_URL, my_json["if_file"]["original"]["relurl"])
-    #     # thumbnail = urljoin(MEDIA_URL, my_json["if_file"]["thumbnail"]["relurl"])
-    #     raw = markdown_video(
-    #         alt_name,
-    #         my_json.pop("content"),
-    #         # thumbnail,
-    #         url_joined,
-    #         license,
-    #         source,
-    #         my_json.pop("author_set"),
-    #         my_json.pop("collection_set"),
-    #         my_json.pop("location"),
-    #         my_json.pop("annotations"),
-    #     )
-    # elif "image" in my_json["if_file"]["mime_type"].lower():
-    #     url_joined = urljoin(MEDIA_URL, my_json["if_file"]["original"]["relurl"])
-    #     raw = markdown_image(
-    #         alt_name,
-    #         my_json.pop("content"),
-    #         url_joined,
-    #         license,
-    #         source,
-    #         my_json.pop("author_set"),
-    #         my_json.pop("collection_set"),
-    #         my_json.pop("location"),
-    #         my_json.pop("annotations"),
-    #     )
     my_json.pop("if_file", None)
 
     uid = my_json["created_by"]
-    user_data = csv_db_funcs.identify("user", uid, DISCOURSE_USER_IDS)
+    user_data = sql_db_funcs.identify("user", uid, DISCOURSE_DB)
 
     if user_data is None:
         user_data = [-1, "NoneUser", None]
@@ -234,13 +199,13 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
         pass
     if user_data[2] is None:
         user_data[2] = "{}@sample.com".format(user_data[1])
-    if csv_db_funcs.identify("user", uid, DISCOURSE_EXISTING_USERS) is None:
+    if sql_db_funcs.identify("user", uid, DISCOURSE_DB) is None:
         print("Creating new user")
         print(user_data)
         new_user_data = disc_interface.create_user(
             user_data[1], user_data[2], "samplepassword", user_data[1], active=True
         ).json()["user_id"]
-        csv_db_funcs.store("user", uid, new_user_data, DISCOURSE_EXISTING_USERS)
+        sql_db_funcs.store("user", uid, new_user_data, DISCOURSE_DB)
     disc_interface.API_USERNAME = user_data[1]
     # print(raw)
     if raw is None:
@@ -264,6 +229,8 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
                 archetype=access_policy,
                 created_at=created_at,
             )
+            if res.ok:
+                break
     disc_interface.API_USERNAME = interface_discourse.ADMIN_NAME
     result_as_dict = res.json()
     discourse_id = result_as_dict["id"]
@@ -271,23 +238,25 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
     topic_id = result_as_dict["topic_id"]
     tags = my_json.pop("tags")
     tags = [convert_to_tag(x) for x in tags]
-    # existing_tags = csv_db_funcs.identify("tag", "all-misc-tags", DISCOURSE_METADATA)
-    existing_tags = None
+    existing_tags = sql_db_funcs.identify("tag", "all-misc-tags", DISCOURSE_DB)
     if existing_tags is None:
         existing_tags = []
-
+    if type(existing_tags) is not list:
+        existing_tags = [existing_tags]
     for tag in tags:
-        # tag_id = csv_db_funcs.identify("tag", tag, DISCOURSE_METADATA)
-        # if tag_id is None:
-        #     pass
-        # csv_db_funcs.store("tag", tag, 8, DISCOURSE_METADATA)
-        # csv_db_funcs.store("tag", "all-misc-tags", [tag], DISCOURSE_METADATA)
+        tag_id = sql_db_funcs.identify("tag", tag, DISCOURSE_DB)
+        if tag_id is None:
+            pass
+        sql_db_funcs.store("tag", tag, 8, DISCOURSE_DB)
+        sql_db_funcs.store("tag", "all-misc-tags", tag, DISCOURSE_DB)
         existing_tags.append(tag)
-        # disc_interface.update_a_tag_group(8, "Misc Tags", existing_tags)
+        disc_interface.update_a_tag_group(8, "Misc Tags", existing_tags)
 
-    existing_langs = csv_db_funcs.identify("tag", "languages", DISCOURSE_METADATA)
+    existing_langs = sql_db_funcs.identify("tag", "languages", DISCOURSE_DB)
     if existing_langs is None:
         existing_langs = []
+    if type(existing_langs) is not list:
+        existing_langs = [existing_langs]
     language = my_json.pop("language")[-1]
     lagnuage = convert_to_tag(language)
     if language in existing_langs:
@@ -295,7 +264,7 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
     else:
         existing_langs.append(language)
         disc_interface.update_a_tag_group(7, "Languages", existing_langs)
-        csv_db_funcs.store("tag", "languages", [language], DISCOURSE_METADATA)
+        sql_db_funcs.store("tag", "languages", language, DISCOURSE_DB)
         tags.append(language)
 
     tags.extend(process_attributes(my_json["attribute_set"], delete=True))
@@ -320,10 +289,8 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
         # disc_interface.unpin_topic(topic_name, topic_id)
         pass
 
-    csv_db_funcs.append_data(
-        my_json.pop("_id"), topic_id, UNUSED_DATA, my_json, append=True
+    sql_db_funcs.store(
+        "unused_data", my_json.pop("_id"), json.dumps(my_json), DISCOURSE_DB
     )
-    csv_db_funcs.append_data(
-        topic_id, topic_name, DISCOURSE_TOPIC_IDS, result_as_dict, append=True
-    )
+    sql_db_funcs.store("topic_ids", topic_name, topic_id, DISCOURSE_DB)
     return my_json
