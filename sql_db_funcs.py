@@ -22,7 +22,7 @@ def identify(name_entered, value_entered, filename):
         return None
 
 
-def store(table_name, value_entered, data_entered, db_name):
+def store(table_name, value_entered, data_entered, db_name, unique=False):
     table_name = str(table_name)
     value_entered = str(value_entered)
     connect_me = sqlite3.connect(db_name)
@@ -30,6 +30,17 @@ def store(table_name, value_entered, data_entered, db_name):
     cur.execute(
         "CREATE TABLE IF NOT EXISTS {} (value TEXT, data TEXT)".format(table_name)
     )
+    if unique:
+        if (
+            len(
+                cur.execute(
+                    "SELECT * FROM {} WHERE value=?".format(table_name), (value_entered)
+                ).fetchall()
+            )
+            > 0
+        ):
+            return None
+
     cur.execute(
         "INSERT INTO {} VALUES(?,?)".format(table_name), (value_entered, data_entered)
     )

@@ -243,13 +243,16 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
         existing_tags = []
     if type(existing_tags) is not list:
         existing_tags = [existing_tags]
+    needs_updation = False
     for tag in tags:
         tag_id = sql_db_funcs.identify("tag", tag, DISCOURSE_DB)
         if tag_id is None:
-            pass
-        sql_db_funcs.store("tag", tag, 8, DISCOURSE_DB)
-        sql_db_funcs.store("tag", "all-misc-tags", tag, DISCOURSE_DB)
-        existing_tags.append(tag)
+            sql_db_funcs.store("tag", tag, 8, DISCOURSE_DB)
+            sql_db_funcs.store("tag", "all-misc-tags", tag, DISCOURSE_DB)
+            needs_updation = True
+
+    existing_tags.extend(tags)
+    if needs_updation:
         disc_interface.update_a_tag_group(8, "Misc Tags", existing_tags)
 
     existing_langs = sql_db_funcs.identify("tag", "languages", DISCOURSE_DB)

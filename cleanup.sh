@@ -15,11 +15,12 @@ fi
 
 
 echo "Removing old data..."
-rm ./mongo_unused.csv ./disc_meta.csv ./disc_topics.csv ./disc_users.csv ./disc_users_created.csv
+FILENAME=$(date '+%Y-%m-%d-%H-%M')-"discourse_db.db"
+mv ./discourse_db.db "$FILENAME"
 echo "Creating empty files..."
-touch ./mongo_unused.csv ./disc_meta.csv ./disc_topics.csv ./disc_users.csv ./disc_users_created.csv
+touch ./discourse_db.db
 echo "Adding admin default entry"
-echo "user, 1, 1" >| ./disc_users_created.csv
+echo "user,1,1" >| ./disc_users_created.csv
 echo "Moving error file to backup"
 FILENAME=$(date '+%Y-%m-%d-%H-%M')-"errors.csv"
 echo "$FILENAME"
