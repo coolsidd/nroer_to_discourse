@@ -53,7 +53,7 @@ class discourse_interface:
     def __init__(
         self,
         URL="http://localhost",
-        API_KEY="6e325593588c04671f879c99b120c3da656772209ffc60b056ef6a8979e32ce4",
+        API_KEY="0ecf2fb1817f9322efd08c7ad3dce8d7314489ec7b9b69f40497c05e5fcabe10"
         API_USERNAME=ADMIN_NAME,
         RETRIES=20,
         TEST_MODE=False,

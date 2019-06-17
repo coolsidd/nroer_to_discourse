@@ -205,6 +205,9 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
         new_user_data = disc_interface.create_user(
             user_data[1], user_data[2], "samplepassword", user_data[1], active=True
         ).json()["user_id"]
+        disc_interface.change_trust_level(new_user_data, 4)
+        disc_interface.grant_admin(new_user_data)
+        input("Waiting for admin approval...\n")
         sql_db_funcs.store("user", uid, new_user_data, DISCOURSE_DB)
     disc_interface.API_USERNAME = user_data[1]
     # print(raw)
