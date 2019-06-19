@@ -223,7 +223,7 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
         created_at=created_at,
     )
     if res.status_code == 422:
-        for i in range(200):
+        for i in range(500):
             res = disc_interface.create_topic(
                 name + " #{}".format(i),
                 None,
