@@ -53,7 +53,7 @@ class discourse_interface:
     def __init__(
         self,
         URL="http://localhost",
-        API_KEY="0ecf2fb1817f9322efd08c7ad3dce8d7314489ec7b9b69f40497c05e5fcabe10"
+        API_KEY="0ecf2fb1817f9322efd08c7ad3dce8d7314489ec7b9b69f40497c05e5fcabe10",
         API_USERNAME=ADMIN_NAME,
         RETRIES=20,
         TEST_MODE=False,
@@ -397,3 +397,14 @@ class discourse_interface:
         data = locals()
         self.API_USERNAME = username_or_email
         return self.post_request(data, url_with_end_point)
+
+    def change_trust_level(self, userid, level):
+        end_point = "/admin/users/{}/trust_level.json".format(userid)
+        url_with_end_point = urljoin(self.URL, end_point)
+        data = {"level": level}
+        return self.put_request(data, url_with_end_point)
+
+    def grant_admin(self, userid):
+        end_point = "/admin/users/{}/grant_admin.json".format(userid)
+        url_with_end_point = urljoin(self.URL, end_point)
+        return self.put_request(None, url_with_end_point)
