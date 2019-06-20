@@ -390,11 +390,14 @@ class discourse_interface:
         data = {"status": "pinned", "enabled": "false"}
         return self.put_request(data, url_with_end_point)
 
+    # NO SAMPLE RESPONSES BELOW
+    @testable
     def delete_category(self, category_id):
         end_point = "/categories/{}".format(category_id)
         url_with_end_point = urljoin(self.URL, end_point)
         return self.delete_request(None, url_with_end_point)
 
+    @testable
     def impersonate_user(self, username_or_email):
         end_point = "admin/impersonate"
         url_with_end_point = urljoin(self.URL, end_point)
@@ -403,19 +406,43 @@ class discourse_interface:
         self.API_USERNAME = username_or_email
         return self.post_request(data, url_with_end_point)
 
+    @testable
     def change_trust_level(self, userid, level):
         end_point = "/admin/users/{}/trust_level.json".format(userid)
         url_with_end_point = urljoin(self.URL, end_point)
         data = {"level": level}
         return self.put_request(data, url_with_end_point)
 
+    @testable
     def grant_admin(self, userid):
         end_point = "/admin/users/{}/grant_admin.json".format(userid)
         url_with_end_point = urljoin(self.URL, end_point)
         return self.put_request(None, url_with_end_point)
 
+    @testable
     def generate_api_key(self):
         end_point = "/admin/api/key.json"
         url_with_end_point = urljoin(self.URL, end_point)
         data = {"id": 1}
         return self.put_request(data, url_with_end_point)
+
+    @testable
+    def upload_settings_from_json(self, json_data):
+        for key, value in json_data.items():
+            end_point = "/admin/site_settings/{}".format(key)
+            url_with_end_point = urljoin(self.URL, end_point)
+            data = {key: value}
+            res = self.put_request(data, url_with_end_point)
+            if res.ok:
+                pass
+            else:
+                raise NotImplementedError(
+                    "Settings could not be implemented successfully"
+                )
+
+    @testable
+    def upload_tags_from_csv(self, csv_file):
+        end_point = "/tags/upload.json"
+        url_with_end_point = urljoin(self.URL, end_point)
+        files = {"file": open(csv_file, "rb")}
+        return self.post_request(None, url_with_end_point, files=files)
