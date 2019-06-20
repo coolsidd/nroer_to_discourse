@@ -284,6 +284,7 @@ class discourse_interface:
         end_point = "/users"
         url_with_end_point = urljoin(self.URL, end_point)
         data = locals()
+        del data["self"]
         return self.post_request(data, url_with_end_point)
 
     @testable
@@ -316,6 +317,7 @@ class discourse_interface:
         end_point = "/tag_groups.json"
         url_with_end_point = urljoin(self.URL, end_point)
         data = locals()
+        del data["self"]
         return self.get_request(data, url_with_end_point)
 
     @testable
@@ -323,6 +325,7 @@ class discourse_interface:
         end_point = "/tag_groups.json"
         url_with_end_point = urljoin(self.URL, end_point)
         data = locals()
+        del data["self"]
         return self.post_request(data, url_with_end_point)
 
     @testable
@@ -339,6 +342,7 @@ class discourse_interface:
         end_point = "/posts.json"
         url_with_end_point = urljoin(self.URL, end_point)
         data = locals()
+        del data["self"]
         data = {k: v for k, v in data.items() if v is not None}
         return self.post_request(data, url_with_end_point)
 
@@ -395,6 +399,7 @@ class discourse_interface:
         end_point = "admin/impersonate"
         url_with_end_point = urljoin(self.URL, end_point)
         data = locals()
+        del data["self"]
         self.API_USERNAME = username_or_email
         return self.post_request(data, url_with_end_point)
 
@@ -408,3 +413,9 @@ class discourse_interface:
         end_point = "/admin/users/{}/grant_admin.json".format(userid)
         url_with_end_point = urljoin(self.URL, end_point)
         return self.put_request(None, url_with_end_point)
+
+    def generate_api_key(self):
+        end_point = "/admin/api/key.json"
+        url_with_end_point = urljoin(self.URL, end_point)
+        data = {"id": 1}
+        return self.put_request(data, url_with_end_point)

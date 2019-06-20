@@ -283,7 +283,7 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
         tags.append(language)
 
     tags.extend(process_attributes(my_json["attribute_set"], delete=True))
-    tags.append(mime_type)
+    tags.append(mime_type.split("/")[0])
     disc_interface.set_tags_to_topic(topic_name, topic_id, tags)
     # print("******************************")
     # print(tags)
