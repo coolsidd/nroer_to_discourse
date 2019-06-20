@@ -2,6 +2,7 @@ FROM debian:stable
 MAINTAINER  <coolsidd>
 WORKDIR /project
 COPY discourse_docker /project/discourse_docker
+COPY . /project/nroer_to_discourse
 RUN apt-get update
 RUN apt-get install \
     apt-transport-https \
