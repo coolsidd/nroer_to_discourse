@@ -20,7 +20,8 @@ mv ./discourse_db.db "$FILENAME"
 echo "Creating empty files..."
 touch ./discourse_db.db
 echo "Adding admin default entry"
-echo "user,1,1" >| ./disc_users_created.csv
+sqlite3 ./discourse_db.db "CREATE TABLE IF NOT EXISTS user (value TEXT, data TEXT)"
+sqlite3 ./discourse_db.db "INSERT INTO user values(1,1)"
 echo "Moving error file to backup"
 FILENAME=$(date '+%Y-%m-%d-%H-%M')-"errors.csv"
 echo "$FILENAME"
