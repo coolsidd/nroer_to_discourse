@@ -12,12 +12,13 @@ from time import sleep
 
 from urllib.parse import urljoin
 
-#with open("./intestine.json", "r") as json_file:
+# with open("./intestine.json", "r") as json_file:
 #    my_json = json.load(json_file)
 #
 
 DISCOURSE_UNUSED = "./discourse_unused.db"
 DISCOURSE_DB = "./discourse_db.db"
+DISCOURSE_USERS = "./disc_users.csv"
 MEDIA_URL = "https://nroer.gov.in/media/"
 
 
@@ -106,7 +107,9 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
         return None
 
     if skip is True:
-        prev_data = sql_db_funcs.identify("unused_data", my_json["_id"], DISCOURSE_UNUSED)
+        prev_data = sql_db_funcs.identify(
+            "unused_data", my_json["_id"], DISCOURSE_UNUSED
+        )
         if prev_data is not None:
             print("Already_done!")
             return json.loads(prev_data)
@@ -192,7 +195,7 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
     my_json.pop("if_file", None)
 
     uid = my_json["created_by"]
-    user_data = sql_db_funcs.identify("user", uid, DISCOURSE_DB)
+    user_data = csv_db_funcs.identify("user", uid, DISCOURSE_USERS)
 
     if user_data is None:
         user_data = [-1, "NoneUser", None]
@@ -201,7 +204,7 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
         pass
     if user_data[2] is None:
         user_data[2] = "{}@sample.com".format(user_data[1])
-    if sql_db_funcs.identify("user", uid, DISCOURSE_DB) is None:
+    if user_data is None:
         print("Creating new user")
         print(user_data)
         new_user_data = disc_interface.create_user(
@@ -260,7 +263,7 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
 
     existing_tags.extend(tags)
     # if needs_updation:
-        # disc_interface.update_a_tag_group(8, "Misc Tags", existing_tags)
+    # disc_interface.update_a_tag_group(8, "Misc Tags", existing_tags)
     #     pass
 
     existing_langs = sql_db_funcs.identify("tag", "languages", DISCOURSE_DB)
