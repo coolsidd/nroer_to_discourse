@@ -22,6 +22,9 @@ DISCOURSE_DB = "./discourse_db.db"
 DISCOURSE_USERS = "./disc_users.csv"
 MEDIA_URL = "https://nroer.gov.in/media/"
 
+LANG_GROUP_ID = "LANG_ID"
+MISC_GROUP_ID = "MISC_ID"
+
 
 def convert_to_tag(x):
     if x is None:
@@ -258,13 +261,13 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
         tag_id = sql_db_funcs.identify("tag", tag, DISCOURSE_DB)
         if tag_id is None:
             pass
-            # sql_db_funcs.store("tag", tag, 8, DISCOURSE_DB)
+            # sql_db_funcs.store("tag", tag, MISC_GROUP_ID, DISCOURSE_DB)
             # sql_db_funcs.store("tag", "all-misc-tags", tag, DISCOURSE_DB)
             needs_updation = True
 
     existing_tags.extend(tags)
     # if needs_updation:
-    # disc_interface.update_a_tag_group(8, "Misc Tags", existing_tags)
+    # disc_interface.update_a_tag_group(MISC_GROUP_ID, "Misc Tags", existing_tags)
     #     pass
 
     existing_langs = sql_db_funcs.identify("tag", "languages", DISCOURSE_DB)
@@ -278,7 +281,7 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
         tags.append(language)
     else:
         existing_langs.append(language)
-        disc_interface.update_a_tag_group(9, "Languages", existing_langs)
+        disc_interface.update_a_tag_group(LANG_GROUP_ID, "Languages", existing_langs)
         sql_db_funcs.store("tag", "languages", language, DISCOURSE_DB)
         tags.append(language)
 

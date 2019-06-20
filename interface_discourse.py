@@ -46,14 +46,15 @@ def testable(func):
     return wrapper
 
 
-ADMIN_NAME = "coolsidd"
+ADMIN_NAME = "DUMMY_NAME"
+API_KEY_GLOBAL = "DUMMY_KEY"
 
 
 class discourse_interface:
     def __init__(
         self,
         URL="http://localhost",
-        API_KEY="0ecf2fb1817f9322efd08c7ad3dce8d7314489ec7b9b69f40497c05e5fcabe10",
+        API_KEY=API_KEY_GLOBAL,
         API_USERNAME=ADMIN_NAME,
         RETRIES=20,
         TEST_MODE=False,
