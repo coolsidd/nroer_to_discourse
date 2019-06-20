@@ -1,0 +1,55 @@
+0-2m,Activity Time
+5-15m,Activity Time
+15-45m,Activity Time
+2-5m,Activity Time
+11-20,Age-range
+21-30,Age-range
+31-40,Age-range
+41-above,Age-range
+5-10,Age-range
+students,Audience
+Teacher-educators,Audience
+Teachers,Audience
+Curricular,Curricular/Not Curricular
+Not-curricular,Curricular/Not Curricular
+all,Educational Alignment
+ncf,Educational Alignment
+state,Educational Alignment
+primary,Educational Level
+tertiary,Educational Level
+secondary,Educational Level
+Upper-primary,Educational Level
+Senior-secondary,Educational Level
+Audios,Educational Use
+documents,Educational Use
+ebooks,Educational Use
+events,Educational Use
+images,Educational Use
+interactives,Educational Use
+maps,Educational Use
+publications,Educational Use
+videos,Educational Use
+active,Interactivity Type
+expositive,Interactivity Type
+mixed,Interactivity Type
+dummy_buffer,Languages
+Cc-by,License
+Cc-by-nc-nd,License
+Cc-by-nd,License
+Cc-by-sa,License
+Cc-by-sa-40-unported,License
+fdl,License
+NCERT,License
+others,License
+Public-domain,License
+dummy_buffer,Misc Tags
+primary,Reading Level
+tertiary,Reading Level
+secondary,Reading Level
+Upper-primary,Reading Level
+Senior-secondary,Reading Level
+easy,Text Complexity
+hard,Text Complexity
+intermediate,Text Complexity
+Moderately-easy,Text Complexity
+Moderately-hard,Text Complexity
