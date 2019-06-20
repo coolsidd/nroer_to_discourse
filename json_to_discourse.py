@@ -12,9 +12,11 @@ from time import sleep
 
 from urllib.parse import urljoin
 
-with open("./intestine.json", "r") as json_file:
-    my_json = json.load(json_file)
+#with open("./intestine.json", "r") as json_file:
+#    my_json = json.load(json_file)
+#
 
+DISCOURSE_UNUSED = "./discourse_unused.db"
 DISCOURSE_DB = "./discourse_db.db"
 MEDIA_URL = "https://nroer.gov.in/media/"
 
@@ -104,7 +106,7 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
         return None
 
     if skip is True:
-        prev_data = sql_db_funcs.identify("unused_data", my_json["_id"], DISCOURSE_DB)
+        prev_data = sql_db_funcs.identify("unused_data", my_json["_id"], DISCOURSE_UNUSED)
         if prev_data is not None:
             print("Already_done!")
             return json.loads(prev_data)
@@ -138,7 +140,7 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
         if res.status_code == 422:
             pass
         else:
-            category_id = json.loads(res.content)["category"]["id"]
+            category_id = res.json()["category"]["id"]
             sql_db_funcs.store("category", category, category_id, DISCOURSE_DB)
     created_at = my_json.pop("created_at", None)
     if created_at is not None:
@@ -146,7 +148,7 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
 
     source = get_from_nested_dicts(my_json["attribute_set"], "source", delete=True)
 
-    # TODO Add licencse to tagslist
+    # TODO Add licence to tagslist
     try:
         license = my_json["legal"]["copyright"]  # + " " + my_json["legal"]["license"]
         my_json.pop("legal")
@@ -241,7 +243,8 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
     topic_id = result_as_dict["topic_id"]
     tags = my_json.pop("tags")
     tags = [convert_to_tag(x) for x in tags]
-    existing_tags = sql_db_funcs.identify("tag", "all-misc-tags", DISCOURSE_DB)
+    # existing_tags = sql_db_funcs.identify("tag", "all-misc-tags", DISCOURSE_DB)
+    existing_tags = []
     if existing_tags is None:
         existing_tags = []
     if type(existing_tags) is not list:
@@ -250,13 +253,15 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
     for tag in tags:
         tag_id = sql_db_funcs.identify("tag", tag, DISCOURSE_DB)
         if tag_id is None:
-            sql_db_funcs.store("tag", tag, 8, DISCOURSE_DB)
-            sql_db_funcs.store("tag", "all-misc-tags", tag, DISCOURSE_DB)
+            pass
+            # sql_db_funcs.store("tag", tag, 8, DISCOURSE_DB)
+            # sql_db_funcs.store("tag", "all-misc-tags", tag, DISCOURSE_DB)
             needs_updation = True
 
     existing_tags.extend(tags)
-    if needs_updation:
-        disc_interface.update_a_tag_group(8, "Misc Tags", existing_tags)
+    # if needs_updation:
+        # disc_interface.update_a_tag_group(8, "Misc Tags", existing_tags)
+    #     pass
 
     existing_langs = sql_db_funcs.identify("tag", "languages", DISCOURSE_DB)
     if existing_langs is None:
@@ -269,7 +274,7 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
         tags.append(language)
     else:
         existing_langs.append(language)
-        disc_interface.update_a_tag_group(7, "Languages", existing_langs)
+        disc_interface.update_a_tag_group(9, "Languages", existing_langs)
         sql_db_funcs.store("tag", "languages", language, DISCOURSE_DB)
         tags.append(language)
 
@@ -296,7 +301,7 @@ def process_json(disc_interface, my_json, test_mode=False, skip=True, force=Fals
         pass
 
     sql_db_funcs.store(
-        "unused_data", my_json.pop("_id"), json.dumps(my_json), DISCOURSE_DB
+        "unused_data", my_json.pop("_id"), json.dumps(my_json), DISCOURSE_UNUSED
     )
     sql_db_funcs.store("topic_ids", topic_name, topic_id, DISCOURSE_DB)
     return my_json
