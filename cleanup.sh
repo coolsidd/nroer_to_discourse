@@ -29,7 +29,7 @@ mv "./errors.csv" "$FILENAME"
 touch "./errors.csv"
 # echo "Running unit tests"
 echo "Cleaning discourse categories and tags..."
-read -r -a OUTPUT <<< "$(python ./empty_tags_and_return_categories.py | tr -d "[],'")"
+read -r -a OUTPUT <<< "$(python3 ./empty_tags_and_return_categories.py | tr -d "[],'")"
 echo "${OUTPUT[@]}"
 for category in "${OUTPUT[@]}"
 do

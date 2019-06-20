@@ -1,7 +1,7 @@
 pipeline {
     agent {
         dockerfile{
-            args "-it -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker --user root -p 8000:80"
+            args "-it -v /var/run/docker.sock:/var/run/docker.sock -v /usr/bin/docker:/usr/bin/docker --user root -p 8002:80"
         }
    }
     stages {
