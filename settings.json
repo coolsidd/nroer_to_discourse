@@ -1,0 +1,23 @@
+{
+	"min_post_length": 1,
+	"min_first_post_length": 1,
+	"min_personal_message_post_length": 1,
+	"body_min_entropy": 0,
+	"min_topic_title_length": 1,
+	"title_min_entropy": 0,
+	"allow_uppercase_posts": "true",
+	"embed_support_markdown": "true",
+	"authorized_extensions": "jpg|jpeg|png|gif|*",
+	"default_trust_level": 1,
+	"content_security_policy": "true",
+	"enable_inline_onebox_on_all_domains": "true",
+	"rate_limit_create_topic": 0,
+	"rate_limit_create_post": 0,
+	"rate_limit_new_user_create_topic": 0,
+	"rate_limit_new_user_create_post": 0,
+	"max_topics_per_day": 3000,
+	"default_email_digest_frequency": "daily",
+	"tagging_enabled": "true",
+	"max_tags_per_topic": 100,
+	"tags_sort_alphabetically": "true"
+}
