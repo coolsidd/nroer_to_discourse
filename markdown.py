@@ -43,8 +43,26 @@ def markdown_video(
 
 
 def markdown_image(
-    title, content, image, license, source, authors, collection, location, annotations
+    title,
+    content,
+    image,
+    license,
+    source,
+    authors,
+    collection,
+    location,
+    annotations,
+    force,
 ):
+    if title is None or content is None:
+        if not force:
+            raise NotImplementedError("No Title or content")
+        else:
+            if title is None:
+                title = ""
+            if content is None:
+                content = ""
+
     template = """# {}
 ### {}
 {}
